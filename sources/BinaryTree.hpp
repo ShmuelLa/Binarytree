@@ -28,7 +28,7 @@ namespace ariel {
             Node(T content) : _content(content), _parent(NULL), _right(NULL), _left(NULL) {};
         };
 
-        Node *root;
+        Node *_root;
 
         public:
             class Preorder_iterator {
@@ -50,10 +50,10 @@ namespace ariel {
                         return *this;
                     }
                     bool operator==(const Preorder_iterator& other) const {
-                        return true;
+                        return false;
                     }
                     bool operator!=(const Preorder_iterator& rhs) const {
-                        return true;
+                        return false;
                     }
             };
 
@@ -76,10 +76,10 @@ namespace ariel {
                         return *this;
                     }
                     bool operator==(const Inorder_iterator& other) const {
-                        return true;
+                        return false;
                     }
                     bool operator!=(const Inorder_iterator& rhs) const {
-                        return true;
+                        return false;
                     }
             };
 
@@ -102,40 +102,41 @@ namespace ariel {
                         return *this;
                     }
                     bool operator==(const Postorder_iterator& other) const {
-                        return true;
+                        return false;
                     }
                     bool operator!=(const Postorder_iterator& rhs) const {
-                        return true;
+                        return false;
                     }
             };
 
+            BinaryTree() : _root(nullptr) {}
             BinaryTree& add_root(const T & num) {
-                this->root = new Node(num);
+                this->_root = new Node(num);
                 return *this;
             }
-            BinaryTree& add_left(const T & parent, const T & num) {
+            BinaryTree<T> & add_left(const T & parent, const T & num) {
                 return *this;
             }
-            BinaryTree& add_right(const T & parent, const T & num) {
+            BinaryTree<T> & add_right(const T & parent, const T & num) {
                 return *this;
             }
             friend ostream &operator<<(ostream &stream, const BinaryTree<T> &tree) {
                 return stream;
             }
             Inorder_iterator begin() {
-                return Inorder_iterator(nullptr);
+                return Inorder_iterator(_root);
             }
             Inorder_iterator end() {
                 return Inorder_iterator(nullptr);
             }
             Preorder_iterator begin_preorder() {
-                return Preorder_iterator(nullptr);
+                return Preorder_iterator(_root);
             }
             Preorder_iterator end_preorder() {
                 return Preorder_iterator(nullptr);
             }
             Inorder_iterator begin_inorder() {
-                return Inorder_iterator(nullptr);
+                return Inorder_iterator(_root);
             }
             Inorder_iterator end_inorder() {
                 return Inorder_iterator(nullptr);
@@ -144,7 +145,7 @@ namespace ariel {
                 return Postorder_iterator(nullptr);
             }
             Postorder_iterator end_postorder() {
-                return Postorder_iterator(nullptr);
+                return Postorder_iterator(_root);
             }
     };
 }
