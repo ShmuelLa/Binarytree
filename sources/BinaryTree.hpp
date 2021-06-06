@@ -10,11 +10,15 @@
  */
 
 #pragma once
+#include <iterator>
 #include <iostream>
 #include <vector>
+#include <stack>
 using std::ostream;
 using std::vector;
 using std::endl;
+using std::stack;
+using std::move;
 
 namespace ariel {
 
@@ -28,18 +32,31 @@ namespace ariel {
             Node *_right;
             Node *_left;
             T _content;
+
             Node(T content) : _content(content), _parent(nullptr), _right(nullptr), _left(nullptr) {};
+
+            // ~Node() {
+            //     delete this->_left;
+            //     delete this->_right;
+            //     // delete this->_parent;
+            //     // delete this->_content;
+            // }
+
+            // Node& operator= (const Node &other){
+            //     if (this != &other) {
+            //         this = new Node(other);
+            //     }
+            //     return *this;
+            // }
         };
 
         Node *_root = nullptr;
 
         public:
-            class Preorder_iterator {
-                private: 
-                    Node *_current;
-                
+
+            class Generic_Iterator {
                 public:
-                    Preorder_iterator(Node *ptr = nullptr) : _current(ptr) {};
+                    Node *_current;
                     T& operator*() const {
                         return _current->_content;
                     }
@@ -48,35 +65,58 @@ namespace ariel {
                         return &(_current->_content);
                     }
 
-                    Preorder_iterator& operator++() {
-                        return *this;
+                    bool operator==(const Generic_Iterator& other) const {
+                        return (_current == other._current);
                     }
 
-                    const Preorder_iterator& operator++(int) {
-                        return *this;
-                    }
-
-                    bool operator==(const Preorder_iterator& other) const {
-                        return false;
-                    }
-
-                    bool operator!=(const Preorder_iterator& rhs) const {
+                    bool operator!=(const Generic_Iterator& rhs) const {
                         return false;
                     }
             };
 
-            class Inorder_iterator {
-                private: 
-                    Node *_current;
-                
+            class Preorder_iterator : public Generic_Iterator {
+                private:
+                    stack <Node*> _memory;
+
                 public:
-                    Inorder_iterator(Node *ptr = nullptr) : _current(ptr) {};
-                    T& operator*() const {
-                        return _current->_content;
+                    Preorder_iterator(Node *root = nullptr) {
+                        if (root != nullptr) {
+                            _memory.push(root);
+                            Generic_Iterator::_current = _memory.top();
+                        }
                     }
 
-                    T* operator->() const {
-                        return &(_current->_content);
+                    Preorder_iterator& operator++() {
+                        if (!_memory.empty()) {
+                            Node* tmp_node = Generic_Iterator::_current;
+                            _memory.pop();
+                            if (tmp_node->_right != nullptr) {
+                                _memory.push(tmp_node->_right);
+                            }
+                            if (tmp_node->_left != nullptr) {
+                                _memory.push(tmp_node->_left);
+                            }
+                            if (!_memory.empty()) {
+                                Generic_Iterator::_current = _memory.top();
+                            }
+                        }
+                        return *this;
+                    }
+
+                    Preorder_iterator operator++(int) {
+                        Preorder_iterator previous_state = *this;
+                        *this->operator++();
+                        return previous_state;
+                    }
+            };
+
+            class Inorder_iterator : public Generic_Iterator {
+                public:
+                    Inorder_iterator(Node *root = nullptr) {
+                        if (root == nullptr) {
+                            Generic_Iterator::_current = nullptr;
+                            return;
+                        }
                     }
 
                     Inorder_iterator& operator++() {
@@ -86,28 +126,15 @@ namespace ariel {
                     const Inorder_iterator& operator++(int) {
                         return *this;
                     }
-
-                    bool operator==(const Inorder_iterator& other) const {
-                        return false;
-                    }
-
-                    bool operator!=(const Inorder_iterator& rhs) const {
-                        return false;
-                    }
             };
 
-            class Postorder_iterator {
-                private: 
-                    Node *_current;
-                
+            class Postorder_iterator : public Generic_Iterator {
                 public:
-                    Postorder_iterator(Node *ptr = nullptr) : _current(ptr) {};
-                    T& operator*() const {
-                        return _current->_content;
-                    }
-
-                    T* operator->() const {
-                        return &(_current->_content);
+                    Postorder_iterator(Node *root = nullptr) {
+                        if (root == nullptr) {
+                            Generic_Iterator::_current = nullptr;
+                            return;
+                        }
                     }
 
                     Postorder_iterator& operator++() {
@@ -116,14 +143,6 @@ namespace ariel {
 
                     const Postorder_iterator& operator++(int) {
                         return *this;
-                    }
-
-                    bool operator==(const Postorder_iterator& other) const {
-                        return false;
-                    }
-
-                    bool operator!=(const Postorder_iterator& rhs) const {
-                        return false;
                     }
             };
 
@@ -187,6 +206,10 @@ namespace ariel {
             }
 
             friend ostream &operator<<(ostream &stream, const BinaryTree<T> &tree) {
+                if (tree->_root == nullptr) {
+                    stream << "Empty Tree" << endl;
+                    return stream; 
+                }
                 stream << "Tree" << endl;
                 return stream;
             }
