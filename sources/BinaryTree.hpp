@@ -82,6 +82,9 @@ namespace ariel {
                             if (!_memory.empty()) {
                                 _current = _memory.top();
                             }
+                            else {
+                                _current = nullptr;
+                            }
                         }
                         else {
                             _current = nullptr;
@@ -182,46 +185,53 @@ namespace ariel {
             class Postorder_iterator {
                 private:
                     Node* _current;
+                    Node* _next;
                     unordered_set <Node*> _memory;
 
                 public:
                     Postorder_iterator(Node *root = nullptr) {
                         if (root != nullptr) {
-                            _current = root;
-                            while (_current != nullptr && _memory.find(_current) == _memory.end()) {
-                                if (_current->_left != nullptr && _memory.find(_current->_left) == _memory.end()) {
-                                    _current = _current->_left;
+                            _next = root;
+                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
+                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
+                                    _next = _next->_left;
                                 }
-                                else if (_current->_right && _memory.find(_current->_right) == _memory.end()) {
-                                    _current = _current->_right;
+                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
+                                    _next = _next->_right;
                                 }
                                 else {
-                                    _current = root;
-                                    _memory.insert(_current);
-                                    _current = root;
+                                    _current = _next;
+                                    _memory.insert(_next);
+                                    _next = root;
                                     return;
                                 }
                             }
                         }
+                        else {
+                            _current = nullptr;
+                        }
                     }
 
                     Postorder_iterator& operator++() {
-                        Node* tmp = _current;
-                        if (_current && _memory.find(_current) == _memory.end()) {
-                            while (_current != nullptr && _memory.find(_current) == _memory.end()) {
-                                if (_current->_left != nullptr && _memory.find(_current->_left) == _memory.end()) {
-                                    _current = _current->_left;
+                        Node* curr = _next;
+                        if (_next && _memory.find(_next) == _memory.end()) {
+                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
+                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
+                                    _next = _next->_left;
                                 }
-                                else if (_current->_right && _memory.find(_current->_right) == _memory.end()) {
-                                    _current = _current->_right;
+                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
+                                    _next = _next->_right;
                                 }
                                 else {
-                                    _current = tmp;
-                                    _memory.insert(_current);
-                                    _current = tmp;
+                                    _current = _next;
+                                    _memory.insert(_next);
+                                    _next = curr;
                                     return *this;
                                 }
                             }
+                        }
+                        else {
+                            _current = nullptr;
                         }
                         return *this;
                     }

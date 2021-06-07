@@ -39,9 +39,10 @@ int main() {
     cout << (*it) << " " ;
   }  // prints: 4 2 5 1 3 
   cout << endl;
-  // for (auto it=tree_of_ints.begin_postorder(); it!=tree_of_ints.end_postorder(); ++it) {
-  //   cout << (*it) << " " ;
-  // }  // prints: 4 5 2 3 1
+  for (auto it=tree_of_ints.begin_postorder(); it!=tree_of_ints.end_postorder(); ++it) {
+    cout << (*it) << " " ;
+  }  // prints: 4 5 2 3 1
+  cout << endl;
 
   for (int element: tree_of_ints) {  // this should work like inorder
     cout << element << " " ;
