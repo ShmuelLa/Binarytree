@@ -14,11 +14,13 @@
 #include <iostream>
 #include <vector>
 #include <stack>
+#include <unordered_set>
 using std::ostream;
 using std::vector;
 using std::endl;
 using std::stack;
 using std::move;
+using std::unordered_set;
 
 namespace ariel {
 
@@ -28,12 +30,11 @@ namespace ariel {
 
         class Node {
             friend class BinaryTree;
-            Node *_parent;
             Node *_right;
             Node *_left;
             T _content;
 
-            Node(T content) : _content(content), _parent(nullptr), _right(nullptr), _left(nullptr) {};
+            Node(T content) : _content(content), _right(nullptr), _left(nullptr) {};
 
             // ~Node() {
             //     delete this->_left;
@@ -53,42 +54,24 @@ namespace ariel {
         Node *_root = nullptr;
 
         public:
-
-            class Generic_Iterator {
-                public:
-                    Node *_current;
-                    T& operator*() const {
-                        return _current->_content;
-                    }
-
-                    T* operator->() const {
-                        return &(_current->_content);
-                    }
-
-                    bool operator==(const Generic_Iterator& other) const {
-                        return (_current == other._current);
-                    }
-
-                    bool operator!=(const Generic_Iterator& rhs) const {
-                        return false;
-                    }
-            };
-
-            class Preorder_iterator : public Generic_Iterator {
+            class Preorder_iterator {
                 private:
                     stack <Node*> _memory;
+                    Node *_current;
 
                 public:
                     Preorder_iterator(Node *root = nullptr) {
                         if (root != nullptr) {
                             _memory.push(root);
-                            Generic_Iterator::_current = _memory.top();
+                            _current = _memory.top();
+                            return;
                         }
+                        _current = nullptr;
                     }
 
                     Preorder_iterator& operator++() {
                         if (!_memory.empty()) {
-                            Node* tmp_node = Generic_Iterator::_current;
+                            Node* tmp_node = _current;
                             _memory.pop();
                             if (tmp_node->_right != nullptr) {
                                 _memory.push(tmp_node->_right);
@@ -97,8 +80,11 @@ namespace ariel {
                                 _memory.push(tmp_node->_left);
                             }
                             if (!_memory.empty()) {
-                                Generic_Iterator::_current = _memory.top();
+                                _current = _memory.top();
                             }
+                        }
+                        else {
+                            _current = nullptr;
                         }
                         return *this;
                     }
@@ -108,41 +94,158 @@ namespace ariel {
                         *this->operator++();
                         return previous_state;
                     }
+
+                    T& operator*() const {
+                        return _current->_content;
+                    }
+
+                    T* operator->() const {
+                        return &(_current->_content);
+                    }
+
+                    bool operator==(const Preorder_iterator& other) const {
+                        return (_current == other._current);
+                    }
+
+                    bool operator!=(const Preorder_iterator& other) const {
+                        return !(_current == other._current);
+                    }
             };
 
-            class Inorder_iterator : public Generic_Iterator {
+            class Inorder_iterator {
+                private:
+                    stack <Node*> _memory;
+                    Node *_current;
+
                 public:
                     Inorder_iterator(Node *root = nullptr) {
-                        if (root == nullptr) {
-                            Generic_Iterator::_current = nullptr;
+                        while (root != nullptr) {
+                            _memory.push(root);
+                            root = root->_left;
+                        }
+                        if (!_memory.empty()) {
+                            _current = _memory.top();
+                            _memory.pop();
                             return;
                         }
+                        _current = nullptr;
                     }
 
                     Inorder_iterator& operator++() {
+                        if(_memory.empty() && _current == nullptr) {
+                            _current = nullptr;
+                        }
+                        else {
+                            if(_current->_right == nullptr && !_memory.empty()) {
+                                _current = _memory.top();
+                                _memory.pop();
+                            }
+                            else if (_current->_right == nullptr && _memory.empty()) {
+                                _current = nullptr;
+                            } 
+                            else {
+                                _current = _current->_right;
+                                while(_current != nullptr){
+                                    _memory.push(_current);
+                                    _current = _current->_left;
+                                }
+                                _current = _memory.top();
+                                _memory.pop();
+                            }
+                        }
                         return *this;
                     }
 
-                    const Inorder_iterator& operator++(int) {
-                        return *this;
+                    Inorder_iterator operator++(int) {
+                        Inorder_iterator previous_state = *this;
+                        *this->operator++();
+                        return previous_state;
+                    }
+
+                    T& operator*() const {
+                        return _current->_content;
+                    }
+
+                    T* operator->() const {
+                        return &(_current->_content);
+                    }
+
+                    bool operator==(const Inorder_iterator& other) const {
+                        return (_current == other._current);
+                    }
+
+                    bool operator!=(const Inorder_iterator& other) const {
+                        return !(_current == other._current);
                     }
             };
 
-            class Postorder_iterator : public Generic_Iterator {
+            class Postorder_iterator {
+                private:
+                    Node* _current;
+                    unordered_set <Node*> _memory;
+
                 public:
                     Postorder_iterator(Node *root = nullptr) {
-                        if (root == nullptr) {
-                            Generic_Iterator::_current = nullptr;
-                            return;
+                        if (root != nullptr) {
+                            _current = root;
+                            while (_current != nullptr && _memory.find(_current) == _memory.end()) {
+                                if (_current->_left != nullptr && _memory.find(_current->_left) == _memory.end()) {
+                                    _current = _current->_left;
+                                }
+                                else if (_current->_right && _memory.find(_current->_right) == _memory.end()) {
+                                    _current = _current->_right;
+                                }
+                                else {
+                                    _current = root;
+                                    _memory.insert(_current);
+                                    _current = root;
+                                    return;
+                                }
+                            }
                         }
                     }
 
                     Postorder_iterator& operator++() {
+                        Node* tmp = _current;
+                        if (_current && _memory.find(_current) == _memory.end()) {
+                            while (_current != nullptr && _memory.find(_current) == _memory.end()) {
+                                if (_current->_left != nullptr && _memory.find(_current->_left) == _memory.end()) {
+                                    _current = _current->_left;
+                                }
+                                else if (_current->_right && _memory.find(_current->_right) == _memory.end()) {
+                                    _current = _current->_right;
+                                }
+                                else {
+                                    _current = tmp;
+                                    _memory.insert(_current);
+                                    _current = tmp;
+                                    return *this;
+                                }
+                            }
+                        }
                         return *this;
                     }
 
-                    const Postorder_iterator& operator++(int) {
+                    Postorder_iterator operator++(int) {
+                        Postorder_iterator previous_state = *this;
+                        *this->operator++();
                         return *this;
+                    }
+
+                    T& operator*() const {
+                        return _current->_content;
+                    }
+
+                    T* operator->() const {
+                        return &(_current->_content);
+                    }
+
+                    bool operator==(const Postorder_iterator& other) const {
+                        return (_current == other._current);
+                    }
+
+                    bool operator!=(const Postorder_iterator& other) const {
+                        return !(_current == other._current);
                     }
             };
 
@@ -170,12 +273,12 @@ namespace ariel {
                 return locate_node(parent_content, current_node->_left);
             }
 
-            BinaryTree& add_root(const T & num) {
+            BinaryTree& add_root(const T & content) {
                 if (this->_root == nullptr) {
-                    this->_root = new Node(num);
+                    this->_root = new Node(content);
                     return *this;
                 }
-                this->_root->_content = num;
+                this->_root->_content = content;
                 return *this;
             }
 
@@ -206,11 +309,11 @@ namespace ariel {
             }
 
             friend ostream &operator<<(ostream &stream, const BinaryTree<T> &tree) {
-                if (tree->_root == nullptr) {
+                if (tree._root == nullptr) {
                     stream << "Empty Tree" << endl;
                     return stream; 
                 }
-                stream << "Tree" << endl;
+                stream << "Tree: " << endl;
                 return stream;
             }
 
@@ -239,11 +342,11 @@ namespace ariel {
             }
 
             Postorder_iterator begin_postorder() {
-                return Postorder_iterator(nullptr);
+                return Postorder_iterator(_root);
             }
 
             Postorder_iterator end_postorder() {
-                return Postorder_iterator(_root);
+                return Postorder_iterator(nullptr);
             }
     };
 }
