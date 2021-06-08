@@ -187,44 +187,54 @@ namespace ariel {
             class Postorder_iterator {
                 private:
                     Node* _current;
-                    Node* _parent;
+                    Node* _next;
+                    unordered_set <Node*> _memory;
 
                 public:
                     Postorder_iterator(Node *root = nullptr) {
-                        if (root) {
-                            while (root->_left != nullptr || root->_right != nullptr) {
-                                if (root->_left != nullptr) {
-                                    _parent = root;
-                                    _current = root->_left;
+                        if (root != nullptr) {
+                            _next = root;
+                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
+                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
+                                    _next = _next->_left;
+                                }
+                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
+                                    _next = _next->_right;
                                 }
                                 else {
-                                    _parent = root;
-                                    _current = root->_right;
+                                    _current = _next;
+                                    _memory.insert(_next);
+                                    _next = root;
+                                    return;
                                 }
                             }
                         }
                         else {
                             _current = nullptr;
-                            _parent = nullptr;
                         }
                     }
 
                     Postorder_iterator& operator++() {
-                        if (_parent != nullptr) {
-                            if (_parent->_left == _current) {
-                                while (_parent->_right != nullptr) {
-                                    _parent = _parent->_right;
-                                    while (_parent->_left != nullptr) {
-                                        _parent = _parent->_left;
-                                    }
+                        Node* curr = _next;
+                        if (_next && _memory.find(_next) == _memory.end()) {
+                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
+                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
+                                    _next = _next->_left;
                                 }
-                                _current = _parent;
-                                return *this;
+                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
+                                    _next = _next->_right;
+                                }
+                                else {
+                                    _current = _next;
+                                    _memory.insert(_next);
+                                    _next = curr;
+                                    return *this;
+                                }
                             }
-                            _current = _parent;
-                            return *this;
                         }
-                        _current = _parent;
+                        else {
+                            _current = nullptr;
+                        }
                         return *this;
                     }
 
