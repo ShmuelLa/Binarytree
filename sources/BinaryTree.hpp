@@ -24,9 +24,7 @@ using std::unordered_set;
 
 namespace ariel {
 
-    template <typename T>
-
-    class BinaryTree {
+    template<typename T> class BinaryTree {
 
         class Node {
             friend class BinaryTree;
@@ -118,9 +116,9 @@ namespace ariel {
             class Inorder_iterator {
                 private:
                     stack <Node*> _memory;
-                    Node *_current;
 
                 public:
+                    Node *_current;
                     Inorder_iterator(Node *root = nullptr) {
                         while (root != nullptr) {
                             _memory.push(root);
@@ -261,6 +259,28 @@ namespace ariel {
 
             BinaryTree() : _root(nullptr) {}
 
+            BinaryTree(const BinaryTree& other) {
+                delete this;
+                if (other._root) {
+                    _root = new Node(other._root->_content);
+                    recursive_tree_copy(_root, other._root);
+                }
+            }
+
+            BinaryTree(BinaryTree&& other) {
+                _root = other._root;
+                other._root = nullptr;
+            }
+
+            ~BinaryTree() {
+                if (!_root) {
+                    for (auto it = begin(); it != end(); ++it) {
+                        Node* to_delete = it._current;
+                        delete to_delete;
+                    }
+                }
+            }
+
             /**
              * @brief recursively scans for a specific node in the tree on all left and right nodes
              * this function will be call each time when trying to add a new node
@@ -281,6 +301,25 @@ namespace ariel {
                     return scanner;
                 }
                 return locate_node(parent_content, current_node->_left);
+            }
+            
+            /**
+             * @brief Recursively iterate through the binary tree in order to copy it
+             * This is a tree recursion function that calls itself on the right and 
+             * left paths accordingly
+             * 
+             * @param source_node source node to iterate from the target tree
+             * @param other source node to iterate from the source tree
+             */
+            void recursive_tree_copy(Node* source_node, Node* other) {
+                if (other->_right) {
+                    source_node->_right = new Node(other->_right->_content);
+                    recursive_tree_copy(source_node->_right, other->_right);
+                }
+                if (other->_left) {
+                    source_node->_left = new Node(other->_left->_content);
+                    recursive_tree_copy(source_node->_left, other->_left);
+                }
             }
 
             BinaryTree& add_root(const T & content) {
@@ -325,6 +364,23 @@ namespace ariel {
                 }
                 stream << "Tree: " << endl;
                 return stream;
+            }
+
+            BinaryTree& operator=(const BinaryTree& other) {
+                if (this != &other) {
+                    delete this;
+                    if (other._root) {
+                        _root = new Node(other._root->_content);
+                        recursive_tree_copy(_root, other._root);
+                    }
+                }
+                return *this;
+            }
+
+            BinaryTree& operator=(BinaryTree&& other) {
+                _root = other._root;
+                other._root = nullptr;
+                return *this;
             }
 
             Inorder_iterator begin() {
