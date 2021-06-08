@@ -13,6 +13,8 @@
 #include <iterator>
 #include <iostream>
 #include <stack>
+#include <new>
+#include <sstream>
 using std::ostream;
 using std::endl;
 using std::stack;
@@ -213,7 +215,7 @@ namespace ariel {
                     Postorder_iterator operator++(int) {
                         Postorder_iterator previous_state = *this;
                         *this->operator++();
-                        return *this;
+                        return previous_state;
                     }
 
                     T& operator*() const {
@@ -299,16 +301,13 @@ namespace ariel {
              * @param other source node to iterate from the source tree
              */
             void recursive_tree_copy(Node* source_node, Node* other) {
-                if (!source_node) {
-                    return;
+                if (other->_left) {
+                    source_node->_left = new Node(other->_left->_content);
+                    recursive_tree_copy(source_node->_left, other->_left);
                 }
                 if (other->_right) {
                     source_node->_right = new Node(other->_right->_content);
                     recursive_tree_copy(source_node->_right, other->_right);
-                }
-                if (other->_left) {
-                    source_node->_left = new Node(other->_left->_content);
-                    recursive_tree_copy(source_node->_left, other->_left);
                 }
             }
 
@@ -357,21 +356,16 @@ namespace ariel {
             }
 
             BinaryTree& operator=(const BinaryTree& other) {
-                if (this == &other) {
+                if (this == &other || !other._root) {
                     return *this;
                 }
                 delete this;
-                if (other._root) {
-                    _root = new Node(other._root->_content);
-                    recursive_tree_copy(other._root, _root);
-                }
+                _root = new Node(other._root->_content);
+                recursive_tree_copy(_root, other._root);
                 return *this;
             }
 
             BinaryTree& operator=(BinaryTree&& other) noexcept {
-                if (_root) {
-                    delete this;
-                }
                 _root = other._root;
                 other._root = nullptr;
                 return *this;
