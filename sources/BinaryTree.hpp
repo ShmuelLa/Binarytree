@@ -116,9 +116,13 @@ namespace ariel {
             class Inorder_iterator {
                 private:
                     stack <Node*> _memory;
+                    Node *_current;
 
                 public:
-                    Node *_current;
+                    Node* get_node() {
+                        return this->_current;
+                    }
+
                     Inorder_iterator(Node *root = nullptr) {
                         while (root != nullptr) {
                             _memory.push(root);
@@ -267,7 +271,7 @@ namespace ariel {
                 }
             }
 
-            BinaryTree(BinaryTree&& other) {
+            BinaryTree(BinaryTree&& other) noexcept {
                 _root = other._root;
                 other._root = nullptr;
             }
@@ -275,7 +279,7 @@ namespace ariel {
             ~BinaryTree() {
                 if (!_root) {
                     for (auto it = begin(); it != end(); ++it) {
-                        Node* to_delete = it._current;
+                        Node* to_delete = it.get_node();
                         delete to_delete;
                     }
                 }
@@ -377,7 +381,7 @@ namespace ariel {
                 return *this;
             }
 
-            BinaryTree& operator=(BinaryTree&& other) {
+            BinaryTree& operator=(BinaryTree&& other) noexcept {
                 _root = other._root;
                 other._root = nullptr;
                 return *this;
