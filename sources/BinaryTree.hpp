@@ -12,41 +12,23 @@
 #pragma once
 #include <iterator>
 #include <iostream>
-#include <vector>
 #include <stack>
-#include <unordered_set>
 using std::ostream;
-using std::vector;
 using std::endl;
 using std::stack;
 using std::move;
-using std::unordered_set;
 
 namespace ariel {
 
     template<typename T> class BinaryTree {
 
         class Node {
-            friend class BinaryTree;
-            Node *_right;
-            Node *_left;
-            T _content;
+            public:
+                Node *_right;
+                Node *_left;
+                T _content;
 
-            Node(T content) : _content(content), _right(nullptr), _left(nullptr) {};
-
-            // ~Node() {
-            //     delete this->_left;
-            //     delete this->_right;
-            //     // delete this->_parent;
-            //     // delete this->_content;
-            // }
-
-            // Node& operator= (const Node &other){
-            //     if (this != &other) {
-            //         this = new Node(other);
-            //     }
-            //     return *this;
-            // }
+                Node(T content) : _content(content), _right(nullptr), _left(nullptr) {};
         };
 
         Node *_root = nullptr;
@@ -188,26 +170,25 @@ namespace ariel {
                 private:
                     Node* _current;
                     Node* _next;
-                    unordered_set <Node*> _memory;
+                    stack <Node*> _memory;
 
                 public:
                     Postorder_iterator(Node *root = nullptr) {
                         if (root != nullptr) {
-                            _next = root;
-                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
-                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
-                                    _next = _next->_left;
+                            stack<Node*> iteration_stack;
+                            iteration_stack.push(root);
+                            while (!iteration_stack.empty()) {
+                                _next = iteration_stack.top();
+                                iteration_stack.pop();
+                                _memory.push(_next);
+                                if (_next->_left) {
+                                    iteration_stack.push(_next->_left);
                                 }
-                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
-                                    _next = _next->_right;
-                                }
-                                else {
-                                    _current = _next;
-                                    _memory.insert(_next);
-                                    _next = root;
-                                    return;
+                                if (_next->_right) {
+                                    iteration_stack.push(_next->_right);
                                 }
                             }
+                            _current = _memory.top();
                         }
                         else {
                             _current = nullptr;
@@ -215,22 +196,13 @@ namespace ariel {
                     }
 
                     Postorder_iterator& operator++() {
-                        Node* curr = _next;
-                        if (_next && _memory.find(_next) == _memory.end()) {
-                            while (_next != nullptr && _memory.find(_next) == _memory.end()) {
-                                if (_next->_left != nullptr && _memory.find(_next->_left) == _memory.end()) {
-                                    _next = _next->_left;
-                                }
-                                else if (_next->_right && _memory.find(_next->_right) == _memory.end()) {
-                                    _next = _next->_right;
-                                }
-                                else {
-                                    _current = _next;
-                                    _memory.insert(_next);
-                                    _next = curr;
-                                    return *this;
-                                }
-                            }
+                        if (_memory.empty()) {
+                            _current = nullptr;
+                            return *this;
+                        }
+                        _memory.pop();
+                        if (!_memory.empty()) {
+                            _current = _memory.top();
                         }
                         else {
                             _current = nullptr;
@@ -264,10 +236,10 @@ namespace ariel {
             BinaryTree() : _root(nullptr) {}
 
             BinaryTree(const BinaryTree& other) {
-                delete this;
+                // delete this;
                 if (other._root) {
                     _root = new Node(other._root->_content);
-                    recursive_tree_copy(_root, other._root);
+                    recursive_tree_copy(other._root, _root);
                 }
             }
 
@@ -277,12 +249,23 @@ namespace ariel {
             }
 
             ~BinaryTree() {
-                if (!_root) {
-                    for (auto it = begin(); it != end(); ++it) {
-                        Node* to_delete = it.get_node();
-                        delete to_delete;
-                    }
+                recursive_delete_tree(_root);
+                _root = nullptr;
+            }
+
+            /**
+             * @brief Used to recursively iterate through the tree and delete all its node
+             * This method is used in the destructor.
+             * 
+             * @param next the next node to delete
+             */
+            void recursive_delete_tree(Node* next) {
+                if (next == nullptr) {
+                    return;
                 }
+                recursive_delete_tree(next->_left);
+                recursive_delete_tree(next->_right);
+                delete next;
             }
 
             /**
@@ -316,6 +299,9 @@ namespace ariel {
              * @param other source node to iterate from the source tree
              */
             void recursive_tree_copy(Node* source_node, Node* other) {
+                if (!source_node) {
+                    return;
+                }
                 if (other->_right) {
                     source_node->_right = new Node(other->_right->_content);
                     recursive_tree_copy(source_node->_right, other->_right);
@@ -371,17 +357,21 @@ namespace ariel {
             }
 
             BinaryTree& operator=(const BinaryTree& other) {
-                if (this != &other) {
-                    delete this;
-                    if (other._root) {
-                        _root = new Node(other._root->_content);
-                        recursive_tree_copy(_root, other._root);
-                    }
+                if (this == &other) {
+                    return *this;
+                }
+                delete this;
+                if (other._root) {
+                    _root = new Node(other._root->_content);
+                    recursive_tree_copy(other._root, _root);
                 }
                 return *this;
             }
 
             BinaryTree& operator=(BinaryTree&& other) noexcept {
+                if (_root) {
+                    delete this;
+                }
                 _root = other._root;
                 other._root = nullptr;
                 return *this;
